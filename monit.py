@@ -1,7 +1,7 @@
 #show RAM usage
 
 import psutil
-
+print("RAM usage:")
 try:
     ram_info = psutil.virtual_memory()
     print(f"Total: {ram_info.total / 1024 / 1024 / 1024:.2f} GB")
@@ -12,7 +12,7 @@ except FileNotFoundError:
     print("Ram info not available on this system")
 
 #show CPU usage
-    
+print("CPU usage:")    
 try:
     cpu_info = psutil.cpu_percent()
     print(f"CPU usage: {cpu_info}%")
@@ -26,7 +26,9 @@ except FileNotFoundError:
     print("CPU info not available on this system")
 
 #show disk usage
-    
+
+
+print("Disk usage:") 
 try:
     disk_info = psutil.disk_usage('/')
     print(f"Total: {disk_info.total / 1024 / 1024 / 1024:.2f} GB")
@@ -36,4 +38,3 @@ try:
 
 except FileNotFoundError:
     print("Disk info not available on this system")
-    
