@@ -14,16 +14,16 @@ except FileNotFoundError:
 print("+----------------------------------------+")
 
 #show CPU usage
-print("CPU usage:")    
 try:
-    cpu_info = psutil.cpu_percent()
-    print(f"CPU usage: {cpu_info}%")
-
+    cpu_percent = psutil.cpu_percent()
+    print(f"Percentage usage: {cpu_percent}%")
+    
+    # CPU frequency
     cpu_info = psutil.cpu_freq()
-    print(f"CPU frequency: {cpu_info.current:.2f} Mhz")
-    print(f"CPU max frequency: {cpu_info.max:.2f} Mhz")
-    print(f"CPU min frequency: {cpu_info.min:.2f} Mhz")
-
+    print(f"Current frequency: {cpu_info.current:.2f} Mhz")
+    print(f"Minimum frequency: {cpu_info.min:.2f} Mhz")
+    print(f"Maximum frequency: {cpu_info.max:.2f} Mhz")
+   
 except FileNotFoundError:
     print("CPU info not available on this system")
 
