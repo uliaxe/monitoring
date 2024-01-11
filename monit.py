@@ -11,6 +11,8 @@ try:
 except FileNotFoundError:
     print("Ram info not available on this system")
 
+print("+----------------------------------------+")
+
 #show CPU usage
 print("CPU usage:")    
 try:
@@ -24,6 +26,8 @@ try:
 
 except FileNotFoundError:
     print("CPU info not available on this system")
+
+print("+----------------------------------------+")
 
 #show disk usage
 
