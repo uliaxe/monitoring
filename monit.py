@@ -10,7 +10,6 @@ def create_monit_dir():
     if not os.path.exists(MONIT_DIR):
         os.makedirs(MONIT_DIR)
 
-
 def get_unique_id():
     return str(datetime.datetime.utcnow().timestamp())
 
@@ -22,9 +21,9 @@ def check_resources():
         'timestamp': get_timestamp(),
         'id': get_unique_id(),
         'ram_usage': psutil.virtual_memory().percent,
-        'disk_usahge': psutil.disk_usage('/').percent,
+        'disk_usage': psutil.disk_usage('/').percent,  # Correction ici
         'cpu_usage': psutil.cpu_percent(),
-        'open_ports' : check_open_ports()
+        'open_ports': check_open_ports()
     }
     return data
 
@@ -46,7 +45,7 @@ def check_open_ports():
 
 def save_report(data):
     create_monit_dir()
-    filename = f"{MONIT_DIR}monit-report_{data['id']}.json"
+    filename = f"{MONIT_DIR}/monit-report_{data['id']}.json"  # Correction ici
     with open(filename, 'w') as f:
         json.dump(data, f, indent=4)
     return filename
