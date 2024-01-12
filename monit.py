@@ -37,7 +37,7 @@ def check_open_ports():
     for port in ports_to_check:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(1)
-        result = sock.connect_ex(('10.0.64.15', port))
+        result = sock.connect_ex(('10.0.64.12', port))
         if result == 0:
             open_ports.append(port)
         sock.close()
