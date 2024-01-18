@@ -1,122 +1,141 @@
-import os
-import json
-import psutil
-import socket
 import datetime
+import os
+import psutil
+import json
+import socket
+import sys
 
-MONIT_DIR = '/var/monit/'
-REPORT_FILE_PREFIX = 'report_'
-CONFIG_FILE = 'config.json'
+#chemin dossier stockage rapport 
+REPORT_DIR= "var/monit"
 
+def create_report_dir():
+    """Create the report directory if it does not exist"""
+    if not os.path.exists(REPORT_DIR):
+        os.makedirs(REPORT_DIR)
 
-def create_monit_dir():
-    if not os.path.exists(MONIT_DIR):
-        os.makedirs(MONIT_DIR)
+def get_timestamp():
+    return datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")
 
-
-def get_current_time():
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
-def get_unique_id():
-    return datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
-
-
-def check_resources():
-    ram_usage = psutil.virtual_memory().percent
-    disk_usage = psutil.disk_usage('/').percent
-    cpu_usage = psutil.cpu_percent()
-    open_ports = check_open_ports()
-
-    report_data = {
-        'time': get_current_time(),
-        'id': get_unique_id(),
-        'RAM_usage': ram_usage,
-        'disk_usage': disk_usage,
-        'CPU_usage': cpu_usage,
-        'open_ports': open_ports
+def generate_report():
+    report = {
+        "timestamp": get_timestamp(),
+        "id": hash(get_timestamp()),
+        "ram_usage": psutil.virtual_memory().percent,
+        "cpu_usage":psutil.cpu_percent(),
+        "disk_usage": psutil.disk_usage("/").percent,
+        "port_status": check_port_status()
     }
+    return report
 
-    report_file_path = os.path.join(MONIT_DIR, f"{REPORT_FILE_PREFIX}{report_data['id']}.json")
-
-    with open(report_file_path, 'w') as report_file:
-        json.dump(report_data, report_file, indent=2)
-
-    print(f"Check completed and report saved to: {report_file_path}")
-
-
-def check_open_ports():
-    with open(CONFIG_FILE) as config_file:
+def check_port_status():
+    #chager les ports dans un fichier de config
+    with open('config.json', 'r') as config_file:
         config = json.load(config_file)
-        ports_to_check = config.get('ports_to_check', [])
+        ports_to_check = config.get("ports_to_check", [])
 
-    open_ports = []
-    for port in ports_to_check:
-        try:
-            sock = socket.create_connection(('127.0.0.1', port), timeout=1)
-            sock.close()
-            open_ports.append(port)
-        except (socket.timeout, ConnectionRefusedError):
-            pass
+        #check l'état des ports
+        port_status = {}
+        for port in ports_to_check:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(1)
+            result = s.connect_ex(('15.0.64.12', port))
+            s.close()
+            port_status[port] = result == 0 
+        return port_status
+    
 
-    return open_ports
-
+def save_report(report):
+    create_report_dir()
+    report_filename = REPORT_DIR + f'report_{report["id"]}.json'
+    with open(report_filename, 'w') as report_file:
+        json.dump(report, report_file, indent=4)
 
 def list_reports():
-    reports = [f for f in os.listdir(MONIT_DIR) if f.startswith(REPORT_FILE_PREFIX) and f.endswith('.json')]
-    print("List of available reports:")
-    for report in reports:
-        print(report)
-
+    reports = [f for f in os.listdir(REPORT_DIR) if f.startswith("report_") and f.endswith(".json")]
+    return reports
 
 def get_last_report():
-    reports = [f for f in os.listdir(MONIT_DIR) if f.startswith(REPORT_FILE_PREFIX) and f.endswith('.json')]
+    reports = list_reports()
     if reports:
-        latest_report = max(reports, key=lambda x: os.path.getctime(os.path.join(MONIT_DIR, x)))
-        print(f"Last report: {latest_report}")
-        with open(os.path.join(MONIT_DIR, latest_report)) as report_file:
-            print(json.dumps(json.load(report_file), indent=2))
+        last_report_filename = REPORT_DIR + sorted(reports)[-1] 
+        with open(last_report_filename, 'r') as last_report_file:
+            last_report= json.load(last_report_file)
+            return last_report
     else:
-        print("No reports available.")
-
-
-def get_avg_last_x_hours(x):
-    reports = [f for f in os.listdir(MONIT_DIR) if f.startswith(REPORT_FILE_PREFIX) and f.endswith('.json')]
+        return None
+    
+def get_avg_report(last_hours):
+    reports = list_reports()
     if reports:
-        recent_reports = sorted(reports, key=lambda x: os.path.getctime(os.path.join(MONIT_DIR, x)), reverse=True)[:x]
-        avg_data = {}
-        for report_file in recent_reports:
-            with open(os.path.join(MONIT_DIR, report_file)) as report:
-                data = json.load(report)
-                for key, value in data.items():
-                    if key not in avg_data:
-                        avg_data[key] = value
-                    elif isinstance(value, (int, float)):
-                        avg_data[key] = (avg_data[key] + value) / 2
+        recent_reports = sorted(reports)[-last_hours:]
+        avg_report = {
+            'timestamp': get_timestamp(),
+            'average_values': {}
+        }
+        for metric in ['ram_usage', 'cpu_usage', 'disk_usage']:
+            avg_metric_values = [json.load(open(REPORT_DIR + report))[metric] for report in recent_reports]
+            avg_report['average_values'][metric] = sum(avg_metric_values) / len(avg_metric_values)
 
-        print(f"Average data for the last {x} hours:")
-        print(json.dumps(avg_data, indent=2))
+        return avg_report
     else:
-        print("No reports available.")
-
+        return None
 
 if __name__ == "__main__":
-    create_monit_dir()
 
-    import argparse
+    if len(sys.argv) < 2:
+        print("Usage: monit.py [check | list | get last |get avg x]")
+        sys.exit(1)
 
-    parser = argparse.ArgumentParser(description="Monitor system resources and generate JSON reports.")
-    parser.add_argument("command", choices=['check', 'list', 'get'], help="Command to execute")
-    parser.add_argument("--avg", type=int, help="Number of hours for 'get avg X' command")
+    command = sys.argv[1]
 
-    args = parser.parse_args()
+    if command == "check":
+        reports = generate_report()
+        save_report(reports)
+        print(f"Check executed and report saved : {REPORT_DIR}report_{reports['id']}.json")
 
-    if args.command == 'check':
-        check_resources()
-    elif args.command == 'list':
-        list_reports()
-    elif args.command == 'get':
-        if args.avg:
-            get_avg_last_x_hours(args.avg)
+    elif command == "list":
+        reports = list_reports()
+        print("List of reports :")
+        for report in reports:
+            print(report)
+
+    elif command == "get":
+        if len(sys.argv) < 3:
+            print("Usage: monit.py get [last | avg]")
+            sys.exit(1)
+
+        subcommand = sys.argv[2]
+
+        if subcommand == "last":
+            last_report = get_last_report()
+            if last_report:
+                print("Last report :")
+                print(json.dumps(last_report, indent=4))
+            else:
+                print("No report available")
+
+        elif subcommand == "avg":
+            if len(sys.argv) < 4:
+                print("Usage: monit.py get avg x")
+                sys.exit(1)
+
+            try:
+                last_hours = int(sys.argv[3])
+                avg_report = get_avg_report(last_hours)
+                if avg_report:
+                    print(f"Average report for the last {last_hours} hours :")
+                    print(json.dumps(avg_report, indent=4))
+                else:
+                    print("No report available")
+            except ValueError:
+                print("Invalid value for X. Please provide a valid integer")
+                sys.exit(1)
+
         else:
-            get_last_report()
+            print(f"Unknown subcommand : {subcommand}")
+            sys.exit(1)
+
+    else:
+        print(f"Unknown command : {command}")
+        sys.exit(1)
+
