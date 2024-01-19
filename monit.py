@@ -6,7 +6,7 @@ import socket
 import sys
 
 #chemin dossier stockage rapport 
-REPORT_DIR= "var/monit"
+REPORT_DIR= "var/monit/"
 
 def create_report_dir():
     """Create the report directory if it does not exist"""
