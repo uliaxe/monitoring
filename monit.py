@@ -14,15 +14,19 @@ def create_report_dir():
         os.makedirs(REPORT_DIR)
 
 def get_timestamp():
-    return datetime.datetime.now().strftime("%d/m/%Y %H:%M:%S")
+    return datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 
 def generate_report():
+    ram_percent = psutil.virtual_memory().percent
+    cpu_percent = psutil.cpu_percent()
+    disk_percent = psutil.disk_usage('/').percent
+
     report = {
-        "timestamp": get_timestamp(),
-        "id": hash(get_timestamp()),
-        "ram_usage": psutil.virtual_memory().percent,
-        "cpu_usage":psutil.cpu_percent(),
-        "disk_usage": psutil.disk_usage("/").percent,
+        'timestamp': get_timestamp(),
+        'id': hash(get_timestamp()),
+        'ram_usage': f"{ram_percent:.2f}% RAM",
+        'cpu_usage': f"{cpu_percent:.2f}% CPU",
+        'disk_usage': f"{disk_percent:.2f}% Disk",
         "port_status": check_ports()
     }
     return report
