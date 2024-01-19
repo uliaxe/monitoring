@@ -14,7 +14,7 @@ def create_report_dir():
         os.makedirs(REPORT_DIR)
 
 def get_timestamp():
-    return datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+    return datetime.datetime.now().strftime("%d/m/%Y %H:%M:%S")
 
 def generate_report():
     report = {
