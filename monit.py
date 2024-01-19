@@ -22,14 +22,15 @@ def generate_report():
     disk_percent = psutil.disk_usage('/').percent
 
     report = {
-        'Date': get_timestamp(),
+        'timestamp': get_timestamp(),
         'id': hash(get_timestamp()),
-        'ram usage': f"{ram_percent:.2f}% are use for RAM",
-        'cpu usage': f"{cpu_percent:.2f}% are use for CPU",
-        'disk usage': f"{disk_percent:.2f}% are use for Disk",
-        "port status": check_ports()
+        'ram usage': f"{ram_percent:.2f}% are used for RAM",
+        'cpu usage': f"{cpu_percent:.2f}% are used for CPU",
+        'disk usage': f"{disk_percent:.2f}% are used for Disk",
+        'port status': check_ports()
     }
     return report
+
 
 def check_ports():
     # Charger les ports depuis le fichier de configuration
