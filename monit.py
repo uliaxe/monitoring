@@ -93,10 +93,31 @@ def get_avg_report(last_hours):
             'average_values': {}
         }
         for metric in ['ram_usage', 'cpu_usage', 'disk_usage']:
-            avg_metric_values = [json.load(open(REPORT_DIR + report))[metric] for report in recent_reports]
-            avg_report['average_values'][metric] = sum(avg_metric_values) / len(avg_metric_values)
+            avg_metric_values = []
+
+            for report in recent_reports:
+                try:
+                    # Charger le rapport JSON
+                    with open(os.path.join(REPORT_DIR, report), 'r') as report_file:
+                        report_data = json.load(report_file)
+
+                    # Vérifier si la clé 'metric' existe dans le rapport
+                    if metric in report_data:
+                        avg_metric_values.append(report_data[metric])
+                    else:
+                        print(f"KeyError: '{metric}' not found in report '{report}'")
+
+                except json.JSONDecodeError as e:
+                    print(f"Error decoding the report file '{report}': {e}")
+                except KeyError:
+                    print(f"KeyError: '{metric}' not found in report '{report}'")
+
+            # Calculer la moyenne uniquement si des valeurs ont été trouvées
+            if avg_metric_values:
+                avg_report['average_values'][metric] = sum(avg_metric_values) / len(avg_metric_values)
 
         return avg_report
+
     else:
         return None
 
