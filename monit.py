@@ -22,12 +22,12 @@ def generate_report():
     disk_percent = psutil.disk_usage('/').percent
 
     report = {
-        'timestamp': get_timestamp(),
+        'Date': get_timestamp(),
         'id': hash(get_timestamp()),
-        'ram_usage': f"{ram_percent:.2f}% RAM",
-        'cpu_usage': f"{cpu_percent:.2f}% CPU",
-        'disk_usage': f"{disk_percent:.2f}% Disk",
-        "port_status": check_ports()
+        'ram usage': f"{ram_percent:.2f}% are use for RAM",
+        'cpu usage': f"{cpu_percent:.2f}% are use for CPU",
+        'disk usage': f"{disk_percent:.2f}% are use for Disk",
+        "port status": check_ports()
     }
     return report
 
