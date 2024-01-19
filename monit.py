@@ -23,37 +23,39 @@ def generate_report():
         "ram_usage": psutil.virtual_memory().percent,
         "cpu_usage":psutil.cpu_percent(),
         "disk_usage": psutil.disk_usage("/").percent,
-        "port_status": check_port_status()
+        "port_status": check_ports()
     }
     return report
 
-def check_port_status():
-    config_filename = "config.json"
+def check_ports():
+    # Charger les ports depuis le fichier de configuration
+    config_filename = 'config.json'
 
     if not os.path.exists(config_filename):
-        print(f"Config file {config_filename} not found")
+        print(f"Error: Configuration file '{config_filename}' not found.")
         sys.exit(1)
 
     try:
         with open(config_filename, 'r') as config_file:
             config = json.load(config_file)
-            ports_to_check = config["ports_to_check"]
-    except json.decoder.JSONDecodeError:
+            ports_to_check = config.get('ports_to_check', [])
+    except json.JSONDecodeError as e:
         print(f"Error decoding the configuration file '{config_filename}': {e}")
         sys.exit(1)
     except KeyError as e:
         print(f"Error: Missing key '{e}' in the configuration file '{config_filename}'.")
         sys.exit(1)
 
-    port_status = {}
+    # Vérifier l'état de chaque port
+    ports_status = {}
     for port in ports_to_check:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(1)
-        result = s.connect_ex((socket.gethostname(), port))
-        s.close
-        port_status[port] = result == 0
+        result = s.connect_ex(('127.0.0.1', port))
+        s.close()
+        ports_status[port] = result == 0  # 0 indique une connexion réussie
 
-    return port_status
+    return ports_status
 
     
 
