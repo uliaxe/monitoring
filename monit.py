@@ -77,7 +77,7 @@ def list_reports():
 def get_last_report():
     reports = list_reports()
     if reports:
-        last_report_filename = REPORT_DIR + sorted(reports)[-1] 
+        last_report_filename = REPORT_DIR + max(reports, key=lambda x: os.path.getctime(os.path.join(REPORT_DIR, x)))
         with open(last_report_filename, 'r') as last_report_file:
             last_report= json.load(last_report_file)
             return last_report
