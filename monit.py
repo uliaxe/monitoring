@@ -28,20 +28,33 @@ def generate_report():
     return report
 
 def check_port_status():
-    #chager les ports dans un fichier de config
-    with open('config.json', 'r') as config_file:
-        config = json.load(config_file)
-        ports_to_check = config.get("ports_to_check", [])
+    config_filename = "config.json"
 
-        #check l'état des ports
-        port_status = {}
-        for port in ports_to_check:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(1)
-            result = s.connect_ex(('15.0.64.12', port))
-            s.close()
-            port_status[port] = result == 0 
-        return port_status
+    if not os.path.exists(config_filename):
+        print(f"Config file {config_filename} not found")
+        sys.exit(1)
+
+    try:
+        with open(config_filename, 'r') as config_file:
+            config = json.load(config_file)
+            ports_to_check = config["ports_to_check"]
+    except json.decoder.JSONDecodeError:
+        print(f"Error decoding the configuration file '{config_filename}': {e}")
+        sys.exit(1)
+    except KeyError as e:
+        print(f"Error: Missing key '{e}' in the configuration file '{config_filename}'.")
+        sys.exit(1)
+
+    port_status = {}
+    for port in ports_to_check:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(1)
+        result = s.connect_ex((socket.gethostname(), port))
+        s.close
+        port_status[port] = result == 0
+
+    return port_status
+
     
 
 def save_report(report):
