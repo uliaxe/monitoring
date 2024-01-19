@@ -56,7 +56,7 @@ def check_ports():
     for port in ports_to_check:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(1)
-        result = s.connect_ex(('127.0.0.1', port))
+        result = s.connect_ex(('15.0.64.12', port))
         s.close()
         ports_status[port] = result == 0  # 0 indique une connexion réussie
 
